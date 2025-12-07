@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Latihan PJOK Modul 1-9 (PDGK4208)</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #c0392b;
+            --light-bg: #ecf0f1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .progress-bar {
+            height: 5px;
+            background-color: #ddd;
+            width: 100%;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body {
+            padding: 30px;
+        }
+
+        .question {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background-color: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            color: #555;
+        }
+
+        .option-btn:hover:not([disabled]) {
+            background-color: #f8f9fa;
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .option-btn.correct {
+            background-color: #d4edda;
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+
+        .option-btn.incorrect {
+            background-color: #f8d7da;
+            border-color: var(--danger-color);
+            color: var(--danger-color);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .score-board {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        #next-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: none;
+        }
+
+        #next-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Result Screen */
+        .result-screen {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .final-score {
+            font-size: 3rem;
+            color: var(--accent-color);
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .restart-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header">
+        <h1>Latihan Soal PJOK (Modul 1-9)</h1>
+    </div>
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <div class="quiz-body" id="quiz-content">
+        <div class="score-board">Soal <span id="current-question">1</span> dari <span id="total-questions">45</span></div>
+        <div class="question" id="question-text">Memuat soal...</div>
+        <div class="options-grid" id="options-container">
+            </div>
+        <div class="controls">
+            <span id="score-display">Skor: 0</span>
+            <button id="next-btn" onclick="nextQuestion()">Soal Selanjutnya</button>
+        </div>
+    </div>
+
+    <div class="result-screen" id="result-screen">
+        <h2>Kuis Selesai!</h2>
+        <p>Anda telah menyelesaikan semua soal.</p>
+        <div class="final-score" id="final-score">0</div>
+        <p id="feedback-text"></p>
+        <button class="restart-btn" onclick="restartQuiz()">Ulangi Kuis</button>
+    </div>
+</div>
+
+<script>
+    // Database Soal berdasarkan Modul 1-9 (45 Soal)
+    const questions = [
+        // MODUL 1: Asas Pendidikan Jasmani
+        {
+            question: "Apa definisi sederhana dari Pendidikan Jasmani?",
+            options: [
+                "Proses melatih tubuh agar menjadi atlet profesional",
+                "Proses pendidikan melalui aktivitas jasmani untuk mencapai tujuan pendidikan",
+                "Kegiatan olahraga yang dilakukan di waktu senggang",
+                "Pelajaran mengenai anatomi tubuh manusia"
+            ],
+            answer: 1
+        },
+        {
+            question: "Istilah 'Men sana in corpore sano' memiliki arti...",
+            options: [
+                "Tubuh yang kuat terdapat jiwa yang lemah",
+                "Di dalam tubuh yang sehat terdapat jiwa yang sehat",
+                "Kesehatan adalah segalanya bagi manusia",
+                "Olahraga adalah obat bagi tubuh dan jiwa"
+            ],
+            answer: 1
+        },
+        {
+            question: "Tiga ranah (domain) kemampuan dalam pendidikan jasmani menurut Bloom adalah...",
+            options: [
+                "Kognitif, Afektif, Psikomotor",
+                "Fisik, Mental, Sosial",
+                "Kekuatan, Kecepatan, Daya Tahan",
+                "Input, Proses, Output"
+            ],
+            answer: 0
+        },
+        {
+            question: "Salah satu tujuan pendidikan jasmani di Sekolah Dasar adalah pengembangan keterampilan gerak. Tahapan gerak untuk usia 8-12 tahun (masa anak-anak) biasanya berkarakteristik...",
+            options: [
+                "Gerak tak sempurna",
+                "Gerak dasar dan pemahaman efisien",
+                "Penghalusan keterampilan dan penyadaran gerak (gerak khusus)",
+                "Spesialisasi kompetisi"
+            ],
+            answer: 2
+        },
+        {
+            question: "Apa fungsi pendidikan jasmani dari aspek organik?",
+            options: [
+                "Meningkatkan pengetahuan peraturan permainan",
+                "Menjadikan fungsi sistem tubuh (kardiovaskuler, daya tahan otot) menjadi lebih baik",
+                "Mengembangkan keterampilan sosial",
+                "Mengembangkan rasa percaya diri"
+            ],
+            answer: 1
+        },
+
+        // MODUL 2: Konsep Gerak dan Keterampilan Dasar
+        {
+            question: "Gerak berpindah tempat dari satu titik ke titik lainnya disebut gerak...",
+            options: [
+                "Manipulatif",
+                "Nonlokomotor",
+                "Lokomotor",
+                "Stabilitas"
+            ],
+            answer: 2
+        },
+        {
+            question: "Manakah di bawah ini yang termasuk contoh gerak Nonlokomotor?",
+            options: [
+                "Berlari dan berjalan",
+                "Melempar dan menangkap",
+                "Membungkuk, memutar, dan mengayun",
+                "Melompat dan meloncat"
+            ],
+            answer: 2
+        },
+        {
+            question: "Gerak manipulatif adalah aktivitas jasmani yang melibatkan...",
+            options: [
+                "Perpindahan tempat seluruh tubuh",
+                "Keseimbangan statis",
+                "Upaya pengerahan pada suatu objek atau menerima daya dari objek",
+                "Gerakan refleks tanpa sadar"
+            ],
+            answer: 2
+        },
+        {
+            question: "Dalam tahapan belajar gerak, fase di mana siswa mulai mempraktikkan gerakan secara berulang-ulang (drilling) disebut fase...",
+            options: [
+                "Kognitif",
+                "Asosiatif",
+                "Otomatisasi",
+                "Reflektif"
+            ],
+            answer: 1
+        },
+        {
+            question: "Fase terakhir dalam belajar gerak di mana gerakan dilakukan secara efisien tanpa harus memikirkan detail gerakannya disebut...",
+            options: [
+                "Cognitive stage",
+                "Associative stage",
+                "Autonomous stage (Otomatisasi)",
+                "Beginner stage"
+            ],
+            answer: 2
+        },
+
+        // MODUL 3: Dasar-Dasar Atletik (Jalan, Lari, Lompat, Lempar)
+        {
+            question: "Istilah 'Atletik' berasal dari bahasa Yunani 'Athlon' yang berarti...",
+            options: [
+                "Kesehatan",
+                "Lari",
+                "Bertanding atau Berlomba",
+                "Kekuatan fisik"
+            ],
+            answer: 2
+        },
+        {
+            question: "Perbedaan utama antara jalan dan lari terletak pada...",
+            options: [
+                "Kecepatan gerakan",
+                "Posisi tangan",
+                "Adanya fase melayang (flight phase) pada lari",
+                "Panjang langkah kaki"
+            ],
+            answer: 2
+        },
+        {
+            question: "Urutan fase gerakan dalam lompat jauh adalah...",
+            options: [
+                "Tolakan - Awalan - Melayang - Mendarat",
+                "Awalan - Tolakan - Melayang - Mendarat",
+                "Awalan - Melayang - Tolakan - Mendarat",
+                "Melayang - Awalan - Tolakan - Mendarat"
+            ],
+            answer: 1
+        },
+        {
+            question: "Lompat jangkit (Triple Jump) terdiri dari tiga gerakan berurutan yaitu...",
+            options: [
+                "Hop, Step, Jump (Jingkat, Langkah, Lompat)",
+                "Run, Hop, Jump",
+                "Step, Hop, Jump",
+                "Hop, Hop, Jump"
+            ],
+            answer: 0
+        },
+        {
+            question: "Gaya dalam lompat tinggi di mana pesenam melewati mistar dengan punggung menghadap ke bawah disebut gaya...",
+            options: [
+                "Gunting (Scissors)",
+                "Guling Perut (Straddle)",
+                "Flop (Fosbury Flop)",
+                "Western Roll"
+            ],
+            answer: 2
+        },
+        {
+            question: "Pada lempar lembing, cara memegang di mana lembing dijepit di antara jari telunjuk dan jari tengah disebut...",
+            options: [
+                "Gaya Amerika",
+                "Gaya Finlandia",
+                "Gaya Menjepit (Tang style)",
+                "Gaya Inggris"
+            ],
+            answer: 2
+        },
+        {
+            question: "Sudut lemparan yang optimal untuk mencapai jarak terjauh dalam tolak peluru atau lempar lembing adalah kira-kira...",
+            options: [
+                "90 derajat",
+                "45 derajat",
+                "30 derajat",
+                "15 derajat"
+            ],
+            answer: 1
+        },
+
+        // MODUL 4: Bentuk dan Sikap Dasar Senam
+        {
+            question: "Senam yang gerakannya dilakukan di atas lantai beralaskan matras tanpa menggunakan alat disebut...",
+            options: [
+                "Senam Artistik",
+                "Senam Ritmik",
+                "Senam Lantai (Floor Exercise)",
+                "Senam Aerobik"
+            ],
+            answer: 2
+        },
+        {
+            question: "Posisi kaki bertumpu dengan empat titik dalam keadaan terbalik dengan meregang dan mengangkat perut dan panggul disebut...",
+            options: [
+                "Handstand",
+                "Headstand",
+                "Kayang",
+                "Sikap Lilin"
+            ],
+            answer: 2
+        },
+        {
+            question: "Gerakan berguling ke depan atas tumpuan tengkuk disebut...",
+            options: [
+                "Back roll",
+                "Forward roll",
+                "Cartwheel",
+                "Handspring"
+            ],
+            answer: 1
+        },
+        {
+            question: "Apa istilah lain untuk gerakan 'baling-baling' dalam senam lantai?",
+            options: [
+                "Handstand",
+                "Cartwheel",
+                "Round off",
+                "Tiger sprong"
+            ],
+            answer: 1
+        },
+        {
+            question: "Kualitas fisik yang paling dominan diperlukan untuk menampilkan gerakan senam yang eksplosif adalah...",
+            options: [
+                "Endurance (Daya Tahan)",
+                "Power (Daya Ledak)",
+                "Flexibility (Kelentukan)",
+                "Agility (Kelincahan)"
+            ],
+            answer: 1
+        },
+        {
+            question: "Apa perbedaan utama antara Handstand dan Headstand?",
+            options: [
+                "Handstand bertumpu pada kepala, Headstand pada tangan",
+                "Handstand bertumpu pada kedua tangan, Headstand bertumpu pada kepala dan tangan",
+                "Handstand dilakukan sambil berjalan, Headstand diam",
+                "Tidak ada perbedaan"
+            ],
+            answer: 1
+        },
+
+        // MODUL 5: Permainan dan Olahraga (Bola Kecil & Besar)
+        {
+            question: "Dalam permainan Kasti, tempat hinggap sering disebut dengan istilah...",
+            options: [
+                "Base",
+                "Hong / Tiang Hinggap",
+                "Gawang",
+                "Net"
+            ],
+            answer: 1
+        },
+        {
+            question: "Teknik dasar dalam permainan Kasti meliputi...",
+            options: [
+                "Menendang, menggiring, menyundul",
+                "Melempar, menangkap, memukul",
+                "Passing, smashing, blocking",
+                "Dribbling, shooting, lay-up"
+            ],
+            answer: 1
+        },
+        {
+            question: "Siapa penemu permainan Bola Voli?",
+            options: [
+                "James Naismith",
+                "William G. Morgan",
+                "Jules Rimet",
+                "Per Henrik Ling"
+            ],
+            answer: 1
+        },
+        {
+            question: "Pemain bola voli yang bertugas khusus sebagai pemain bertahan dan memakai seragam berbeda disebut...",
+            options: [
+                "Tosser / Setter",
+                "Spiker / Smasher",
+                "Libero",
+                "Server"
+            ],
+            answer: 2
+        },
+        {
+            question: "Teknik memukul bola voli dengan keras dan menukik tajam ke area lawan disebut...",
+            options: [
+                "Service",
+                "Passing",
+                "Blocking",
+                "Smash / Spike"
+            ],
+            answer: 3
+        },
+        {
+            question: "Berapa jumlah pemain dalam satu tim sepak bola?",
+            options: [
+                "6 orang",
+                "11 orang",
+                "5 orang",
+                "12 orang"
+            ],
+            answer: 1
+        },
+        {
+            question: "Dalam sepak bola, jika seorang pemain berada lebih dekat ke garis gawang lawan daripada bola dan pemain lawan kedua terakhir saat bola dioper, maka ia dinyatakan...",
+            options: [
+                "Kick off",
+                "Corner kick",
+                "Offside",
+                "Handball"
+            ],
+            answer: 2
+        },
+
+        // MODUL 6: Tenis Meja dan Bulu Tangkis (General Knowledge based on Topic)
+        {
+            question: "Induk organisasi tenis meja di Indonesia adalah...",
+            options: [
+                "PBSI",
+                "PTMSI",
+                "PERBASI",
+                "PSSI"
+            ],
+            answer: 1
+        },
+        {
+            question: "Pegangan bet tenis meja seperti orang berjabat tangan disebut...",
+            options: [
+                "Penholder grip",
+                "Shakehand grip",
+                "American grip",
+                "Continental grip"
+            ],
+            answer: 1
+        },
+        {
+            question: "Pukulan dalam bulu tangkis yang dilakukan dari atas kepala dengan keras untuk mematikan lawan disebut...",
+            options: [
+                "Lob",
+                "Dropshot",
+                "Smash",
+                "Drive"
+            ],
+            answer: 2
+        },
+        {
+            question: "Sistem perhitungan poin dalam bulu tangkis modern menggunakan sistem...",
+            options: [
+                "Rally Point (21 poin)",
+                "Pindah bola (15 poin)",
+                "Waktu (Time limit)",
+                "Set Point (25 poin)"
+            ],
+            answer: 0
+        },
+
+        // MODUL 7: Renang dan Pencak Silat (General Knowledge based on Topic)
+        {
+            question: "Gaya renang yang paling cepat dan sering disebut gaya bebas adalah...",
+            options: [
+                "Breast stroke (Gaya Dada)",
+                "Back stroke (Gaya Punggung)",
+                "Butterfly stroke (Gaya Kupu-kupu)",
+                "Crawl (Gaya Krol)"
+            ],
+            answer: 3
+        },
+        {
+            question: "Pengambilan napas pada renang gaya dada dilakukan pada saat...",
+            options: [
+                "Kepala masuk ke dalam air",
+                "Kepala naik ke permukaan air",
+                "Kaki menendang lurus",
+                "Meluncur"
+            ],
+            answer: 1
+        },
+        {
+            question: "Dalam pencak silat, posisi menapak kaki untuk memperkokoh posisi tubuh disebut...",
+            options: [
+                "Kuda-kuda",
+                "Pukulan",
+                "Tangkisan",
+                "Hindaran"
+            ],
+            answer: 0
+        },
+        {
+            question: "Unsur seni dalam pencak silat biasanya ditampilkan dalam bentuk...",
+            options: [
+                "Tanding",
+                "Kembangan / Jurus Tunggal Baku",
+                "Fisik",
+                "Mental spiritual"
+            ],
+            answer: 1
+        },
+
+        // MODUL 8: Pendidikan Kesehatan (General Knowledge based on Topic)
+        {
+            question: "Singkatan dari UKS adalah...",
+            options: [
+                "Unit Kesehatan Sekolah",
+                "Usaha Kesehatan Sekolah",
+                "Upaya Kesejahteraan Siswa",
+                "Unit Keselamatan Siswa"
+            ],
+            answer: 1
+        },
+        {
+            question: "Zat gizi yang berfungsi sebagai sumber energi utama bagi tubuh adalah...",
+            options: [
+                "Protein",
+                "Vitamin",
+                "Karbohidrat",
+                "Mineral"
+            ],
+            answer: 2
+        },
+        {
+            question: "Tindakan pertama yang dilakukan pada cedera memar atau keseleo sering dikenal dengan metode RICE. Huruf 'I' singkatan dari...",
+            options: [
+                "Injury",
+                "Ice (Kompres Es)",
+                "Infection",
+                "Inject"
+            ],
+            answer: 1
+        },
+
+        // MODUL 9: Evaluasi Pembelajaran Penjas (General Knowledge based on Topic)
+        {
+            question: "Tes yang digunakan untuk mengetahui kemampuan awal siswa sebelum pembelajaran dimulai disebut...",
+            options: [
+                "Tes Formatif",
+                "Tes Sumatif",
+                "Pre-test (Tes Awal)",
+                "Post-test"
+            ],
+            answer: 2
+        },
+        {
+            question: "Penilaian yang dilakukan selama proses pembelajaran berlangsung untuk memperbaiki proses belajar disebut...",
+            options: [
+                "Evaluasi Sumatif",
+                "Evaluasi Formatif",
+                "Evaluasi Diagnostik",
+                "Evaluasi Penempatan"
+            ],
+            answer: 1
+        },
+        {
+            question: "Dalam evaluasi Penjas, penilaian ranah psikomotorik berkaitan dengan...",
+            options: [
+                "Pengetahuan dan pemahaman teori",
+                "Sikap dan perilaku sportivitas",
+                "Keterampilan gerak dan fisik",
+                "Kemampuan bersosialisasi"
+            ],
+            answer: 2
+        },
+        {
+            question: "Salah satu bentuk tes pengukuran kebugaran jasmani untuk mengukur daya tahan jantung dan paru adalah...",
+            options: [
+                "Lari cepat 60 meter",
+                "Push up",
+                "Sit up",
+                "Lari jarak jauh (misal 1000m / 1200m) atau Multistage Fitness Test"
+            ],
+            answer: 3
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let selectedOptionIndex = null;
+
+    const questionElement = document.getElementById('question-text');
+    const optionsElement = document.getElementById('options-container');
+    const currentQuestionCounter = document.getElementById('current-question');
+    const scoreDisplay = document.getElementById('score-display');
+    const nextButton = document.getElementById('next-btn');
+    const progressBar = document.getElementById('progress');
+    const quizContent = document.getElementById('quiz-content');
+    const resultScreen = document.getElementById('result-screen');
+    const finalScoreElement = document.getElementById('final-score');
+    const feedbackText = document.getElementById('feedback-text');
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        document.getElementById('total-questions').innerText = questions.length;
+        quizContent.style.display = 'block';
+        resultScreen.style.display = 'none';
+        showQuestion();
+    }
+
+    function showQuestion() {
+        resetState();
+        let currentQuestion = questions[currentQuestionIndex];
+        
+        // Update Text
+        questionElement.innerText = currentQuestion.question;
+        currentQuestionCounter.innerText = currentQuestionIndex + 1;
+        scoreDisplay.innerText = `Skor: ${score}`;
+
+        // Update Progress Bar
+        let progress = ((currentQuestionIndex) / questions.length) * 100;
+        progressBar.style.width = `${progress}%`;
+
+        // Create Options
+        currentQuestion.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.innerText = option;
+            button.classList.add('option-btn');
+            button.onclick = () => selectAnswer(index, button);
+            optionsElement.appendChild(button);
+        });
+    }
+
+    function resetState() {
+        nextButton.style.display = 'none';
+        selectedOptionIndex = null;
+        optionsElement.innerHTML = '';
+    }
+
+    function selectAnswer(index, selectedButton) {
+        // Prevent changing answer
+        const buttons = optionsElement.getElementsByClassName('option-btn');
+        for(let btn of buttons) {
+            btn.disabled = true;
+        }
+
+        const correctIndex = questions[currentQuestionIndex].answer;
+
+        if (index === correctIndex) {
+            selectedButton.classList.add('correct');
+            score += 10; // Assuming 10 points per question just for scoring visual
+        } else {
+            selectedButton.classList.add('incorrect');
+            // Highlight the correct one
+            buttons[correctIndex].classList.add('correct');
+        }
+
+        // Update Score Display immediately
+        let calculatedScore = Math.round((score / (questions.length * 10)) * 100); 
+        // Logic fix: Just count correct answers for internal logic, but display nice score
+        // Let's just track raw correct count for final calculation
+        if (index === correctIndex) {
+             // We can use a separate counter if needed, but for now let's just proceed
+        }
+
+        nextButton.style.display = 'block';
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            showQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        quizContent.style.display = 'none';
+        resultScreen.style.display = 'block';
+        
+        // Calculate final score based on 100 scale
+        // Current logic: score adds 10 per correct answer. 
+        // Total possible raw score = 45 * 10 = 450.
+        
+        let finalScore = Math.round((score / (questions.length * 10)) * 100);
+        finalScoreElement.innerText = finalScore;
+        progressBar.style.width = '100%';
+
+        if (finalScore >= 80) {
+            feedbackText.innerText = "Luar Biasa! Anda menguasai materi modul 1-9 dengan sangat baik.";
+        } else if (finalScore >= 60) {
+            feedbackText.innerText = "Bagus! Namun masih ada beberapa materi yang perlu diulang.";
+        } else {
+            feedbackText.innerText = "Tetap Semangat! Silakan pelajari kembali modulnya.";
+        }
+    }
+
+    function restartQuiz() {
+        startQuiz();
+    }
+
+    // Start the quiz on load
+    startQuiz();
+
+</script>
+
+</body>
+</html>
